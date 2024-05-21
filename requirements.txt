@@ -1,0 +1,12 @@
+# This file may be used to create an environment using:
+# $ conda create --name <env> --file <this file>
+# platform: linux-64
+matplotlib-base=3.7.2=py311h54ef318_0
+matplotlib-inline=0.1.6=pyhd8ed1ab_0
+numpy=1.24.3=py311h08b1b3b_1
+numpy-base=1.24.3=py311hf175353_1
+pandas=2.0.3=py311h320fe9a_1
+scipy=1.11.1=py311h64a7726_0
+scitokens-cpp=0.7.1=hf3971a6_0
+seaborn=0.12.2=hd8ed1ab_0
+seaborn-base=0.12.2=pyhd8ed1ab_0
