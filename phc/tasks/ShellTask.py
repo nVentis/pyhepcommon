@@ -8,7 +8,11 @@ class ShellTask(BaseTask):
     A task that provides convenience methods to work with shell commands, i.e., printing them on the
     command line and executing them with error handling.
     """
-
+    
+    cwd = luigi.Parameter(
+        default="",
+        description="custom working directory; if empty, will use a temporary directory; defaults to empty",
+    )
     custom_args = luigi.Parameter(
         default="",
         description="custom arguments that are forwarded to the underlying command; they might not "
@@ -22,12 +26,11 @@ class ShellTask(BaseTask):
     )
 
     exclude_index = True
-    exclude_params_req = {"custom_args"}
+    exclude_params_req = {"cwd", "custom_args"}
 
     # by default, do not run in a tmp dir
     run_command_in_tmp = False
     cleanup_tmp_on_error = True
-
     
     # Command
     def build_command(self, fallback_level):
@@ -82,7 +85,11 @@ class ShellTask(BaseTask):
 
         # when no cwd was set and run_command_in_tmp is True, create a tmp dir
         tmp_dir = None
-        if "cwd" not in kwargs and self.run_command_in_tmp:
+        if self.cwd != "":
+            kwargs["cwd"] = law.LocalDirectoryTarget(path=self.cwd)
+            tmp_dir.touch()
+            kwargs["cwd"] = tmp_dir.path
+        elif "cwd" not in kwargs and self.run_command_in_tmp:
             tmp_dir = law.LocalDirectoryTarget(is_tmp=True)
             tmp_dir.touch()
             kwargs["cwd"] = tmp_dir.path
