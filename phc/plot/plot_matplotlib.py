@@ -4,7 +4,7 @@ import matplotlib.colors as colors
 import matplotlib.cm as cm
 import matplotlib.pylab as pylab
 import pandas as pd
-from analysis.calc import calc_FWHM
+from phc.statistics.calc_FWHM import calc_FWHM
 from matplotlib import rcParams as rcp
 from matplotlib.backends.backend_pdf import PdfPages
 from typing import Optional, Union, Callable, Dict, List

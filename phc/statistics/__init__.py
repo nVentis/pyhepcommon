@@ -1,1 +1,1 @@
-from statistics.calc_FWHM import *
+from .calc_FWHM import calc_FWHM

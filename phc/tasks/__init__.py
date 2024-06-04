@@ -1,1 +1,2 @@
-from phc.tasks.ShellTask import *
+from .BaseTask import BaseTask
+from .ShellTask import ShellTask

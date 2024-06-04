@@ -1,1 +1,1 @@
-from plot_matplotlib import *
+from .plot_matplotlib import get_colorpalette, set_colorpalette, export_figures, plot_hist, plot_confusion, defaultsize, plot_styling, plot_roc, plot_lego
