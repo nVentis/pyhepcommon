@@ -12,7 +12,8 @@ type_map = {
     "int32_t": "i4",
     "float": "float32",
     "double": "float64",
-    "std::vector<float>": ""
+    "std::vector<float>": "",
+    "std::string": "U" # Unicode string, see https://stackoverflow.com/a/46052176/3362188
 }
 
 def convert_root_type(type_name: str):
@@ -28,6 +29,7 @@ def convert_root_type(type_name: str):
 # Loads a ROOT file and converts it into a numpy representation
 def root_to_np(source_path: str,
                   in_file_location: str,
+                  columns: Optional[List[str]]=None,
                   merge_with_np_array: Optional[np.ndarray] = None,
                   join_by: Optional[List]=None,
                   merge_columns: Optional[List]=None,
@@ -43,15 +45,18 @@ def root_to_np(source_path: str,
 
             # Get correct column names and types for conversion
             dtype_arr = []
-            dtype_names = data.typenames()
+            dtype_names = columns if (columns is not None) else data.typenames()
             
             dtype_names_accepted = []
 
             for key in dtype_names:
-                conv_type = convert_root_type(dtype_names[key])
+                conv_type = convert_root_type(dtype_names[key]).lower()
                 if conv_type is not None:
                     dtype_names_accepted.append(key)
                     dtype_arr.append((key, conv_type))
+                #else:
+                #    if conv_type == "std::vector<float>":
+                #    TODO: importing std::vector?        
 
             dtype_list2 = []
             if merge_with_np_array is not None and join_by is not None:
