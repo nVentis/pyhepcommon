@@ -1,3 +1,4 @@
+from .data import *
 from .plot import *
 from .statistics import *
 from .tasks import *
