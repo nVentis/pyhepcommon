@@ -20,3 +20,9 @@ class BaseTask(law.Task):
 
     def local_target(self, *path):
         return law.LocalFileTarget(self.local_path(*path))
+    
+    def local_directory_target(self, *path):
+        return law.LocalDirectoryTarget(self.local_path(*path))
+    
+    def target_collection(self, targets):
+        return law.TargetCollection(targets)
