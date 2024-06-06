@@ -3,10 +3,10 @@ import law
 import os
 
 class BaseTask(law.Task):
-    version = luigi.Parameter()
+    version = luigi.Parameter(default='v1')
     
-        # Paths
     def store_parts(self):
+        # Paths
         return (self.__class__.__name__, self.version)
 
     def local_path(self, *path):
