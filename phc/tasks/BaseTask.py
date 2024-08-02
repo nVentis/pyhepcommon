@@ -18,8 +18,8 @@ class BaseTask(law.Task):
         
         return os.path.join(*map(str, parts))
 
-    def local_target(self, *path):
-        return law.LocalFileTarget(self.local_path(*path))
+    def local_target(self, *path, format=None):
+        return law.LocalFileTarget(self.local_path(*path), format=format)
     
     def local_directory_target(self, *path):
         return law.LocalDirectoryTarget(self.local_path(*path))
