@@ -186,7 +186,7 @@ def plot_hist(data:Union[dict,pd.DataFrame], x:Optional[Union[str,list]]=None,
             xlim_view = [0.98*data.min(), 1.02*data.max()]
     else:
         columns = [x] if isinstance(x, str) else x
-        if xlim_view is None:asdf
+        if xlim_view is None:
             if isinstance(data, dict):
                 xlim_view = (np.min(data[list(data.keys())[0]]), np.max(data[list(data.keys())[0]]))
                 for key, dt in data.items():
