@@ -70,7 +70,6 @@ def calc_bins(xscale:str, min_val:float, max_val:float, bins:Union[Iterable,int]
         bin_edges = np.array(bins) if isinstance(bins, Iterable) else np.linspace(min_val, max_val, num=bins+1)
         
     bin_centers = calc_bin_centers(bin_edges)
-    print(min_val, max_val, bin_edges, bin_centers)
     
     return (bin_edges, bin_centers)
 
