@@ -7,7 +7,7 @@ import pandas as pd
 from phc.statistics.calc_FWHM import calc_FWHM
 from matplotlib import rcParams as rcp
 from matplotlib.backends.backend_pdf import PdfPages
-from typing import Optional, Union, Callable, Dict, List
+from typing import Optional, Union, Callable, Dict, List, Iterable
 import inspect
 try:
     from typing import Literal
@@ -56,24 +56,28 @@ def remove_nan(values:np.ndarray):
     
     return values[~mask]
 
-def calc_bins(xscale:str, min_val:float, max_val:float, bins:int):
+def calc_bin_centers(bin_edges):
+    return (bin_edges[:-1] + bin_edges[1:]) / 2
+
+def calc_bins(xscale:str, min_val:float, max_val:float, bins:Union[Iterable,int]):
     if xscale == 'log':
         log_start, log_stop = np.log(min_val), np.log(max_val)
-        bin_edges = np.exp(np.linspace(log_start, log_stop, bins+2))
+        bin_edges = np.array(bins) if isinstance(bins, Iterable) else np.exp(np.linspace(log_start, log_stop, bins+2))
     else:
         if xscale != 'linear':
             print(f'Unsupported xscale {xscale}. Reverting to linear')
             
-        bin_edges = np.linspace(min_val, max_val, num=bins+1)
+        bin_edges = np.array(bins) if isinstance(bins, Iterable) else np.linspace(min_val, max_val, num=bins+1)
         
-    bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
+    bin_centers = calc_bin_centers(bin_edges)
+    print(min_val, max_val, bin_edges, bin_centers)
     
     return (bin_edges, bin_centers)
 
 def plot_hist(data:Union[dict,pd.DataFrame], x:Optional[Union[str,list]]=None,
               fit_func:Optional[Callable]=None, fit_opts:Optional[Union[List[dict], dict]]=None,
               labels:Optional[List[str]]=None, colorpalette=None, stacked:Optional[bool]=False,
-              bins:int=128, same_bins:bool=True, xlim_binning:Optional[Union[list,tuple]]=None,
+              bins:Union[Iterable, int]=128, int_bins:bool=False, same_bins:bool=True, xlim_binning:Optional[Union[list,tuple]]=None,
               xlim:Optional[Union[list,tuple]]=None, ylim=None,
               xlabel:Optional[str] = None, ylabel:Optional[str]=None,
               title:Optional[str]=None, ax=None,
@@ -103,7 +107,8 @@ def plot_hist(data:Union[dict,pd.DataFrame], x:Optional[Union[str,list]]=None,
         labels (_type_, optional): _description_. Defaults to None.
         colorpalette (_type_, optional): _description_. Defaults to None.
         stacked (bool, optional): _description_. Defaults to False.
-        bins (int, optional): _description_. Defaults to 128.
+        bins (Union[int, Iterable], optional): If an Interable, defined the bin edges, otherwise the number of bins. Defaults to 128.
+        int_bins (bool, optional): Extends xlim for integer values. Defaults to False.
         same_bins (bool): if True, the same bin ranges are forced for all plotted histograms. Defaults to True.
         xlim_binning (list, optional): _description_. Defaults to False.
         xlim (Optional[list], optional): _description_. Defaults to None.
@@ -211,6 +216,10 @@ def plot_hist(data:Union[dict,pd.DataFrame], x:Optional[Union[str,list]]=None,
         min_val = xlim_binning[0] if (xlim_binning is not None) else np.min([ np.min(data[x]) for x in columns ])
         max_val = xlim_binning[1] if (xlim_binning is not None) else np.max([ np.max(data[x]) for x in columns ])
         
+        if int_bins:
+            bins = min_val + np.arange(round(max_val-min_val) + 2) - 0.5 # we want to include the upper as well
+            xlim_view = (bins[0], bins[-1])
+        
         bin_edges, bin_centers = calc_bins(xscale, min_val, max_val, bins)
         
         subset = []
@@ -253,6 +262,10 @@ def plot_hist(data:Union[dict,pd.DataFrame], x:Optional[Union[str,list]]=None,
             # Limits
             min_val = xlim_binning[0] if (xlim_binning is not None) else np.min(values)
             max_val = xlim_binning[1] if (xlim_binning is not None) else np.max(values)
+            
+            if int_bins:
+                bins = min_val + np.arange(round(max_val-min_val) + 2) - 0.5 # we want to include the upper as well
+                xlim_view = (bins[0], bins[-1])
             
             bin_edges, bin_centers = calc_bins(xscale, min_val, max_val, bins)          
 
