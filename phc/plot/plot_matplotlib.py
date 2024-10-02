@@ -194,10 +194,11 @@ def plot_hist(data:Union[dict,pd.DataFrame], x:Optional[Union[str,list]]=None,
             if isinstance(data, dict):
                 xlim_view = (np.min(data[list(data.keys())[0]]), np.max(data[list(data.keys())[0]]))
                 for key, dt in data.items():
-                    xlim_view = (
-                        min(xlim_view[0], dt.min()),
-                        max(xlim_view[0], dt.max()),
-                    )
+                    if len(dt):
+                        xlim_view = (
+                            min(xlim_view[0], dt.min()),
+                            max(xlim_view[0], dt.max()),
+                        )
             else:
                 xlim_view = [0.98*data[x].min().min(), 1.02*data[x].max().max()]
                 
