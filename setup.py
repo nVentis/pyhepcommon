@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='pyhepcommon',
+    name='phc',
     version='0.0.1',
     url='https://github.com/nVentis/pyhepcommon',
     author='Bryan Bliewert',
