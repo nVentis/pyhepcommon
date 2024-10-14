@@ -18,12 +18,6 @@ class ShellTask(BaseTask):
         description="custom arguments that are forwarded to the underlying command; they might not "
         "be encoded into output file paths; no default",
     )
-    test_timing = luigi.BoolParameter(
-        default=False,
-        significant=False,
-        description="when set, a log file is created along the outputs containing timing and "
-        "memory usage information; default: False",
-    )
 
     exclude_index = True
     exclude_params_req = {"cwd", "custom_args"}
@@ -66,19 +60,6 @@ class ShellTask(BaseTask):
         # proper command encoding
         cmd = (law.util.quote_cmd(cmd) if isinstance(cmd, (list, tuple)) else cmd).strip()
 
-        # prepend timing instructions
-        if self.test_timing:
-            log_file = self.join_postfix(["timing", self.get_output_postfix()]) + ".log"
-            timing_cmd = (
-                "/usr/bin/time "
-                "-ao {log_file} "
-                "-f \"TIME='Elapsed %e User %U Sys %S Mem %M' time\""
-            ).format(
-                log_file=self.local_target(log_file).path,
-            )
-            cmd = "{} {}".format(timing_cmd, cmd)
-            print("adding timing command")
-
         # default highlighted command
         if not highlighted_cmd:
             highlighted_cmd = law.util.colored(cmd, "cyan")
@@ -86,7 +67,7 @@ class ShellTask(BaseTask):
         # when no cwd was set and run_command_in_tmp is True, create a tmp dir
         tmp_dir = None
         if self.cwd != "":
-            kwargs["cwd"] = law.LocalDirectoryTarget(path=self.cwd)
+            tmp_dir = law.LocalDirectoryTarget(path=self.cwd)
             tmp_dir.touch()
             kwargs["cwd"] = tmp_dir.path
         elif "cwd" not in kwargs and self.run_command_in_tmp:
@@ -95,10 +76,6 @@ class ShellTask(BaseTask):
             kwargs["cwd"] = tmp_dir.path
         self.publish_message("cwd: {}".format(kwargs.get("cwd", os.getcwd())))
 
-        # log the timing command
-        if self.test_timing:
-            self.publish_message("timing: {}".format(timing_cmd))
-
         # call it
         with self.publish_step("running '{}' ...".format(highlighted_cmd)):
             p, lines = law.util.readable_popen(cmd, shell=True, executable="/bin/bash", **kwargs)
@@ -106,6 +83,7 @@ class ShellTask(BaseTask):
                 print(line)
 
         # raise an exception when the call failed and optional is not True
+        print('RETURN CODE:', p.returncode)
         if p.returncode != 0 and not optional:
             # when requested, make the tmp_dir non-temporary to allow for checks later on
             if tmp_dir and not self.cleanup_tmp_on_error:
@@ -116,9 +94,11 @@ class ShellTask(BaseTask):
 
         return p
 
+    """
     @law.decorator.log
     @law.decorator.notify
     @law.decorator.localize
+    """
     def run(self, **kwargs):
         self.pre_run_command()
 

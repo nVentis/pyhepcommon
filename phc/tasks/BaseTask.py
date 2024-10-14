@@ -4,16 +4,12 @@ import os
 
 class BaseTask(law.Task):
     version = luigi.Parameter(default='v1')
-    
-    def store_parts(self):
-        # Paths
-        return (self.__class__.__name__, self.version)
 
     def local_path(self, *path):
         # DATA_PATH is defined in setup.sh
-        parts = ()
-        parts += ("$DATA_PATH",)
-        parts += self.store_parts()
+        parts = ("$DATA_PATH", )
+        parts += (self.__class__.__name__ ,)
+        parts += (self.version,)
         parts += path
         
         return os.path.join(*map(str, parts))
