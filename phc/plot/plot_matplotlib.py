@@ -14,7 +14,7 @@ try:
 except ImportError:
     from typing_extensions import Literal
 
-from math import sqrt
+from math import sqrt, inf
 #from scipy.stats import chisquare
 
 rcp['hatch.linewidth'] = 0.5  # previous pdf hatch linewidth
@@ -75,7 +75,7 @@ def calc_bins(xscale:str, min_val:float, max_val:float, bins:Union[Iterable,int]
 
 def plot_hist(data:Union[dict,pd.DataFrame], x:Optional[Union[str,list]]=None,
               fit_func:Optional[Callable]=None, fit_opts:Optional[Union[List[dict], dict]]=None,
-              labels:Optional[List[str]]=None, colorpalette=None, stacked:Optional[bool]=False,
+              labels:Optional[List[str]]=None, colorpalette:Optional[Union[List,Callable]]=None, stacked:Optional[bool]=False,
               bins:Union[Iterable, int]=128, int_bins:bool=False, same_bins:bool=True, xlim_binning:Optional[Union[list,tuple]]=None,
               xlim:Optional[Union[list,tuple]]=None, ylim=None,
               xlabel:Optional[str] = None, ylabel:Optional[str]=None,
@@ -104,7 +104,7 @@ def plot_hist(data:Union[dict,pd.DataFrame], x:Optional[Union[str,list]]=None,
         fit_func (Optional[function], optional): only supported if one column is to be plotted, i.e. x is a string
         fit_opts (Optional[Union[List[dict], dict]], opional): only used for printing
         labels (_type_, optional): _description_. Defaults to None.
-        colorpalette (_type_, optional): _description_. Defaults to None.
+        colorpalette (Optional[Union[List,Callable]], optional): Either a list of colors, or a callback that returns a list of colors given the column names. If None, will revert to get_colorpalette(). Defaults to None.
         stacked (bool, optional): _description_. Defaults to False.
         bins (Union[int, Iterable], optional): If an Interable, defined the bin edges, otherwise the number of bins. Defaults to 128.
         int_bins (bool, optional): Extends xlim for integer values. Defaults to False.
@@ -141,10 +141,7 @@ def plot_hist(data:Union[dict,pd.DataFrame], x:Optional[Union[str,list]]=None,
     else:
         fig = plt.gcf()
     
-    if colorpalette is None:
-        colorpalette = get_colorpalette()
-    
-    # Force conversion of dict to a structure numpy can work with
+    # Force conversion of dict to a structure numpy one can work with
     if isinstance(data, dict):
         if force_df:
             data = pd.DataFrame(data)
@@ -162,23 +159,6 @@ def plot_hist(data:Union[dict,pd.DataFrame], x:Optional[Union[str,list]]=None,
     if x is None:
         x = list(data.keys())
     
-    """
-    if isinstance(data, dict):
-        if len(data.keys()) == 1:
-            columns = [None]
-            data = data[data.keys()[0]]
-            xlim_view = [0.98*data.min(), 1.02*data.max()] if xlim is None else xlim
-        else:
-            columns = x
-            if xlim_view is None:
-                xlim_view = [float('inf'), float('-inf')]
-                for x in data:
-                    xlim_view[0] = min(xlim_view[0], 0.98*data[x].min())
-                    xlim_view[1] = max(xlim_view[1], 1.02*data[x].max())
-                
-    else: # DataFrame
-    """
-    
     xlim_view = xlim if xlim is not None else None
     
     if isinstance(x, str):
@@ -192,12 +172,13 @@ def plot_hist(data:Union[dict,pd.DataFrame], x:Optional[Union[str,list]]=None,
         columns = [x] if isinstance(x, str) else x
         if xlim_view is None:
             if isinstance(data, dict):
-                xlim_view = (np.min(data[list(data.keys())[0]]), np.max(data[list(data.keys())[0]]))
+                #print(data[list(data.keys())], data[list(data.keys())])
+                xlim_view = (inf, -inf)
                 for key, dt in data.items():
                     if len(dt):
                         xlim_view = (
                             min(xlim_view[0], dt.min()),
-                            max(xlim_view[0], dt.max()),
+                            max(xlim_view[1], dt.max()),
                         )
             else:
                 xlim_view = [0.98*data[x].min().min(), 1.02*data[x].max().max()]
@@ -208,6 +189,16 @@ def plot_hist(data:Union[dict,pd.DataFrame], x:Optional[Union[str,list]]=None,
             xlim_binning = xlim_view
         else: # why this?
             xlim_binning = [np.min(np.min(data)), np.max(np.max(data))]
+    
+    # Prepare colorpalette        
+    if colorpalette is None:
+        if isinstance(colorpalette, Callable):
+            colorpalette = colorpalette(columns)
+        else:
+            colorpalette = get_colorpalette()
+        
+    if isinstance(colorpalette, Iterable) and len(data.keys()) > len(colorpalette):
+        raise Exception(f"Colorpalette is not large enough. Max is {len(colorpalette)}")
     
     all_bin_centers = []
     all_bin_counts = []
@@ -239,7 +230,6 @@ def plot_hist(data:Union[dict,pd.DataFrame], x:Optional[Union[str,list]]=None,
                                         #hatch="///",
                                         #color="w",
                                         histtype="stepfilled",
-                                        #ec=colorpalette[i],
                                         density=normalize,
                                         stacked=True,
                                         weights=subset_weights)
@@ -249,6 +239,7 @@ def plot_hist(data:Union[dict,pd.DataFrame], x:Optional[Union[str,list]]=None,
         
         for i in range(len(patches)):
             plt.setp(patches[i], edgecolor='black', lw=0.5)
+            patches[i][0].set(facecolor=colorpalette[i])
         
     else:
         for i in range(len(columns)):
